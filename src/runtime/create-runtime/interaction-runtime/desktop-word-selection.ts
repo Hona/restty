@@ -1,5 +1,5 @@
 import type { RenderState } from "../../../wasm";
-import type { RuntimeCell } from "./types";
+import type { RuntimeCell } from "./state.types";
 
 type DesktopWordSelectionRange = {
   start: number;

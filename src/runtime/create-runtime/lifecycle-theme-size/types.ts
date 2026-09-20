@@ -1,9 +1,9 @@
-import type { InputHandler } from "../../input";
-import type { FontManagerState } from "../../fonts";
-import type { Color, WebGLState, WebGPUState } from "../../renderer";
-import type { GhosttyTheme } from "../../theme";
-import type { RuntimeTerminalColor } from "./highlight-terminal-color-utils.types";
-import type { ResttyWasm } from "../../wasm";
+import type { InputHandler } from "../../../input";
+import type { FontManagerState } from "../../../fonts";
+import type { Color, WebGLState, WebGPUState } from "../../../renderer";
+import type { GhosttyTheme } from "../../../theme";
+import type { RuntimeTerminalColor } from "../highlight-terminal-color-utils.types";
+import type { ResttyWasm } from "../../../wasm";
 
 export type ActiveState = WebGPUState | WebGLState | null;
 

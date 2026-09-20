@@ -5,7 +5,7 @@ import type {
   ResttyRuntimeRenderApi,
   ResttyRuntimeSearchApi,
   ResttyRuntimeTerminalApi,
-} from "../runtime/core/api";
+} from "../../runtime/core/api";
 
 /**
  * Direction for splitting a pane.
