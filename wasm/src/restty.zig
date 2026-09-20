@@ -167,14 +167,23 @@ const KittyPlacementAbi = extern struct {
     image_revision_high: u32,
 };
 
+const ColorScheme = ghostty.device_status.ColorScheme;
+const continuation_max_bytes: usize = 64 * 1024;
+
 const StreamHandler = struct {
     readonly: ReadonlyHandler,
     output: *std.ArrayListUnmanaged(u8),
+    color_scheme: ColorScheme = .dark,
 
-    fn init(term: *ghostty.Terminal, output: *std.ArrayListUnmanaged(u8)) StreamHandler {
+    fn init(term: *ghostty.Terminal, output: *std.ArrayListUnmanaged(u8), color_scheme: ColorScheme) StreamHandler {
         var handler = term.vtHandler();
         handler.effects.write_pty = &writePty;
-        return .{ .readonly = handler, .output = output };
+        handler.effects.color_scheme = &colorScheme;
+        return .{ .readonly = handler, .output = output, .color_scheme = color_scheme };
+    }
+    fn colorScheme(handler: *ReadonlyHandler) ?ColorScheme {
+        const self: *StreamHandler = @fieldParentPtr("readonly", handler);
+        return self.color_scheme;
     }
     fn writePty(handler: *ReadonlyHandler, bytes: []const u8) void {
         const self: *StreamHandler = @fieldParentPtr("readonly", handler);
@@ -588,8 +597,16 @@ pub export fn restty_create(cols: u16, rows: u16, max_scrollback: u32) ?*Restty 
         .rows = rows,
         .cols = cols,
     };
-    handle.stream = TerminalStream.init(.{ .allocator = alloc, .handler = StreamHandler.init(&handle.term, &handle.output) });
+    handle.stream = initStream(handle, .dark);
     return handle;
+}
+
+fn initStream(h: *Restty, color_scheme: ColorScheme) TerminalStream {
+    return TerminalStream.init(.{
+        .allocator = h.alloc,
+        .handler = StreamHandler.init(&h.term, &h.output, color_scheme),
+        .continuation_max_bytes = continuation_max_bytes,
+    });
 }
 
 pub export fn restty_destroy(handle: ?*Restty) void {
@@ -614,6 +631,101 @@ pub export fn restty_write(handle: ?*Restty, ptr: [*]const u8, len: usize) u32 {
     const slice = ptr[0..len];
     ensureScrollingRegion(h);
     h.stream.nextSlice(slice);
+    return @intFromEnum(ErrorCode.ok);
+}
+
+/// Tell the terminal which color scheme the host UI is showing.
+/// `scheme` is 0 for light and 1 for dark. Answers later CSI ? 996 n
+/// queries, and when the running program opted in with DEC mode 2031,
+/// immediately writes an unsolicited CSI ? 997 ; n report to the output
+/// buffer so the program can re-theme.
+pub export fn restty_set_color_scheme(handle: ?*Restty, scheme: u32) u32 {
+    const h = handle orelse return @intFromEnum(ErrorCode.invalid_handle);
+    const value: ColorScheme = switch (scheme) {
+        0 => .light,
+        1 => .dark,
+        else => return @intFromEnum(ErrorCode.invalid_arg),
+    };
+    const handler = &h.stream.handler;
+    if (handler.color_scheme == value) return @intFromEnum(ErrorCode.ok);
+    handler.color_scheme = value;
+    if (h.term.modes.get(.report_color_scheme)) {
+        var buf: [ghostty.device_status.max_color_scheme_report_encode_size]u8 = undefined;
+        var writer: std.Io.Writer = .fixed(&buf);
+        ghostty.device_status.encodeColorSchemeReport(&writer, value) catch
+            return @intFromEnum(ErrorCode.internal);
+        StreamHandler.writePty(&handler.readonly, buf[0..writer.end]);
+    }
+    return @intFromEnum(ErrorCode.ok);
+}
+
+/// Read a DEC private (`ansi` = 0) or ANSI (`ansi` = 1) mode.
+/// Returns 1 when set, 0 when unset, and 2 when Ghostty does not know
+/// the mode number.
+pub export fn restty_get_mode(handle: ?*Restty, mode: u16, ansi: u32) u32 {
+    const h = handle orelse return 2;
+    const value = ghostty.modes.modeFromInt(mode, ansi != 0) orelse return 2;
+    return @intFromBool(h.term.modes.get(value));
+}
+
+/// Encode the complete terminal state, including both screens, scrollback,
+/// modes, palette, and any unfinished escape sequence, into a buffer the
+/// caller owns. Writes the byte length to `out_len` and returns the pointer,
+/// or 0 on failure. Release the buffer with restty_free.
+pub export fn restty_snapshot_encode(handle: ?*Restty, out_len: *u32) usize {
+    out_len.* = 0;
+    const h = handle orelse return 0;
+
+    var continuation_bytes: ?[]u8 = null;
+    defer if (continuation_bytes) |bytes| h.alloc.free(bytes);
+    const continuation: ghostty.snapshot.Continuation = if (h.stream.ground()) .ground else blk: {
+        var tracker: std.Io.Writer.Allocating = .init(h.alloc);
+        defer tracker.deinit();
+        h.stream.writeContinuation(&tracker.writer) catch return 0;
+        continuation_bytes = tracker.toOwnedSlice() catch return 0;
+        break :blk .{ .bytes = continuation_bytes.? };
+    };
+
+    var writer: std.Io.Writer.Allocating = .init(h.alloc);
+    defer writer.deinit();
+    ghostty.snapshot.encode(h.alloc, &writer.writer, &h.term, .{ .continuation = continuation }) catch return 0;
+    const bytes = writer.toOwnedSlice() catch return 0;
+    out_len.* = @intCast(bytes.len);
+    return @intFromPtr(bytes.ptr);
+}
+
+/// Replace the terminal state with a snapshot from restty_snapshot_encode.
+/// The snapshot's own size wins; call restty_resize afterwards to fit the
+/// host. On failure the current terminal is left untouched.
+pub export fn restty_snapshot_decode(handle: ?*Restty, ptr: [*]const u8, len: usize) u32 {
+    const h = handle orelse return @intFromEnum(ErrorCode.invalid_handle);
+    if (len == 0) return @intFromEnum(ErrorCode.invalid_arg);
+
+    var reader: std.Io.Reader = .fixed(ptr[0..len]);
+    var decoded = ghostty.snapshot.decode(h.alloc, browser_io, &reader, .{
+        .max_continuation_bytes = continuation_max_bytes,
+    }) catch return @intFromEnum(ErrorCode.internal);
+    defer decoded.deinit(h.alloc);
+
+    const color_scheme = h.stream.handler.color_scheme;
+    const width_px = h.term.width_px;
+    const height_px = h.term.height_px;
+
+    h.stream.deinit();
+    clearSearch(h);
+    h.render_state.deinit(h.alloc);
+    h.term.deinit(h.alloc);
+
+    h.term = decoded.toOwned();
+    h.term.width_px = width_px;
+    h.term.height_px = height_px;
+    h.render_state = .empty;
+    h.stream = initStream(h, color_scheme);
+    switch (decoded.continuation) {
+        .ground => {},
+        .bytes => |bytes| h.stream.nextSlice(bytes),
+    }
+    ensureScrollingRegion(h);
     return @intFromEnum(ErrorCode.ok);
 }
 

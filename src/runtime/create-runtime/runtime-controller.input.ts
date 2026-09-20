@@ -94,8 +94,41 @@ export function createRuntimeControllerInput(options: CreateRuntimeControllerInp
     sendInput("\x1b[2J\x1b[H");
   }
 
+  function setColorScheme(scheme: "light" | "dark") {
+    const shared = options.readState();
+    if (!shared.wasm || !shared.wasmHandle) return;
+    shared.wasm.setColorScheme(shared.wasmHandle, scheme);
+    flushWasmOutputToPty();
+  }
+
+  function getMode(mode: number, ansi = false): boolean | undefined {
+    const shared = options.readState();
+    if (!shared.wasm || !shared.wasmHandle) return undefined;
+    return shared.wasm.getMode(shared.wasmHandle, mode, ansi);
+  }
+
+  function snapshot(): Uint8Array | undefined {
+    const shared = options.readState();
+    if (!shared.wasm || !shared.wasmHandle) return undefined;
+    return shared.wasm.snapshot(shared.wasmHandle);
+  }
+
+  function restore(bytes: Uint8Array): boolean {
+    const shared = options.readState();
+    if (!shared.wasm || !shared.wasmHandle) return false;
+    if (options.interaction.selectionState.active || options.interaction.selectionState.dragging) {
+      options.interaction.clearSelection();
+    }
+    const ok = shared.wasm.restore(shared.wasmHandle, bytes);
+    if (!ok) return false;
+    options.markSearchDirty();
+    options.writeState({ needsRender: true });
+    return true;
+  }
+
   return {
     clearScreen,
     sendInput,
+    state: { setColorScheme, getMode, snapshot, restore },
   };
 }

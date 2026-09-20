@@ -36,6 +36,7 @@ type RuntimeTerminalDeps = {
   internalState: RuntimeControllerInternalState;
   applyTheme: ResttyRuntimeTerminalApi["applyTheme"];
   clearScreen: () => void;
+  state: Pick<ResttyRuntimeTerminalApi, "setColorScheme" | "getMode" | "snapshot" | "restore">;
   terminalCapabilities: RuntimeControllerPublicCapabilities["terminal"];
 };
 
@@ -101,6 +102,7 @@ export function createRuntimeTerminalView({
   internalState,
   applyTheme,
   clearScreen,
+  state,
   terminalCapabilities,
 }: RuntimeTerminalDeps): ResttyRuntimeTerminalApi {
   function setRenderer(value: "auto" | "webgpu" | "webgl2") {
@@ -126,6 +128,10 @@ export function createRuntimeTerminalView({
     applyTheme,
     resetTheme: terminalCapabilities.resetTheme,
     clearScreen,
+    setColorScheme: state.setColorScheme,
+    getMode: state.getMode,
+    snapshot: state.snapshot,
+    restore: state.restore,
   };
 }
 

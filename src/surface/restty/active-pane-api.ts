@@ -70,6 +70,25 @@ export abstract class ResttyActivePaneApi implements ResttyActivePaneSurfaceApi 
     this.requireActivePaneHandle().clearScreen();
   }
 
+  setColorScheme(scheme: Parameters<ResttyPaneApi["setColorScheme"]>[0]): void {
+    this.requireActivePaneHandle().setColorScheme(scheme);
+  }
+
+  getMode(
+    mode: Parameters<ResttyPaneApi["getMode"]>[0],
+    ansi?: Parameters<ResttyPaneApi["getMode"]>[1],
+  ): boolean | undefined {
+    return this.requireActivePaneHandle().getMode(mode, ansi);
+  }
+
+  snapshot(): Uint8Array | undefined {
+    return this.requireActivePaneHandle().snapshot();
+  }
+
+  restore(bytes: Parameters<ResttyPaneApi["restore"]>[0]): boolean {
+    return this.requireActivePaneHandle().restore(bytes);
+  }
+
   connectPty(url: Parameters<ResttyPaneApi["connectPty"]>[0] = ""): void {
     this.requireActivePaneHandle().connectPty(url);
   }

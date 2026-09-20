@@ -191,6 +191,62 @@ export class ResttyWasm {
     return textDecoder.decode(copy);
   }
 
+  /**
+   * Tell the terminal which color scheme the host UI is showing. Answers
+   * later CSI ? 996 n queries and, when the program enabled DEC mode 2031,
+   * queues an unsolicited CSI ? 997 ; n report in the output buffer.
+   */
+  setColorScheme(handle: number, scheme: "light" | "dark"): void {
+    if (!this.exports.restty_set_color_scheme) return;
+    this.exports.restty_set_color_scheme(handle, scheme === "dark" ? 1 : 0);
+  }
+
+  /** Read a DEC private mode (default) or ANSI mode. Unknown modes read as `undefined`. */
+  getMode(handle: number, mode: number, ansi = false): boolean | undefined {
+    if (!this.exports.restty_get_mode) return undefined;
+    const value = this.exports.restty_get_mode(handle, mode, ansi ? 1 : 0);
+    if (value === 2) return undefined;
+    return value === 1;
+  }
+
+  /**
+   * Encode the complete terminal state (both screens, scrollback, modes,
+   * palette, unfinished escape sequences) into a portable byte buffer.
+   */
+  snapshot(handle: number): Uint8Array | undefined {
+    if (!this.exports.restty_snapshot_encode) return undefined;
+    const lenPtr = this.exports.restty_alloc(4);
+    if (!lenPtr) return undefined;
+    let ptr = 0;
+    let len = 0;
+    try {
+      ptr = this.exports.restty_snapshot_encode(handle, lenPtr);
+      len = new DataView(this.memory.buffer).getUint32(lenPtr, true);
+      if (!ptr || !len) return undefined;
+      return new Uint8Array(this.memory.buffer, ptr, len).slice();
+    } finally {
+      if (ptr && len) this.exports.restty_free(ptr, len);
+      this.exports.restty_free(lenPtr, 4);
+    }
+  }
+
+  /**
+   * Replace the terminal state with a snapshot from `snapshot()`. The
+   * snapshot's own size wins; resize afterwards to fit the host. Returns
+   * false and leaves the terminal untouched on failure.
+   */
+  restore(handle: number, snapshot: Uint8Array): boolean {
+    if (!this.exports.restty_snapshot_decode || !snapshot.length) return false;
+    const ptr = this.exports.restty_alloc(snapshot.length);
+    if (!ptr) return false;
+    try {
+      new Uint8Array(this.memory.buffer, ptr, snapshot.length).set(snapshot);
+      return this.exports.restty_snapshot_decode(handle, ptr, snapshot.length) === 0;
+    } finally {
+      this.exports.restty_free(ptr, snapshot.length);
+    }
+  }
+
   /** Get active Kitty keyboard protocol flags. */
   getKittyKeyboardFlags(handle: number): number {
     if (!this.exports.restty_kitty_keyboard_flags) return 0;

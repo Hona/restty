@@ -36,7 +36,11 @@ export function createRuntimeController(options: RuntimeControllerOptions): Runt
     tickWebGPU: render.tickWebGPU,
     tickWebGL: render.tickWebGL,
   });
-  const { sendInput, clearScreen } = createRuntimeControllerInput({
+  const {
+    sendInput,
+    clearScreen,
+    state: terminalState,
+  } = createRuntimeControllerInput({
     ptyTransport: runtime.ptyTransport,
     inputHandler: runtime.inputHandler,
     ptyInputRuntime: runtime.ptyInputRuntime,
@@ -118,6 +122,7 @@ export function createRuntimeController(options: RuntimeControllerOptions): Runt
         destroy: lifecycle.destroy,
         applyTheme: lifecycleDeps.applyTheme,
         clearScreen,
+        state: terminalState,
         sendInput,
         copySelectionToClipboard,
         pasteFromClipboard,

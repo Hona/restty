@@ -41,6 +41,10 @@ export type ResttyPaneApi = {
   sendInput: ResttyRuntimeIoApi["sendInput"];
   sendKeyInput: ResttyRuntimeIoApi["sendKeyInput"];
   clearScreen: ResttyRuntimeTerminalApi["clearScreen"];
+  setColorScheme: ResttyRuntimeTerminalApi["setColorScheme"];
+  getMode: ResttyRuntimeTerminalApi["getMode"];
+  snapshot: ResttyRuntimeTerminalApi["snapshot"];
+  restore: ResttyRuntimeTerminalApi["restore"];
   connectPty: ResttyRuntimeIoApi["connectPty"];
   disconnectPty: ResttyRuntimeIoApi["disconnectPty"];
   isPtyConnected: ResttyRuntimeIoApi["isPtyConnected"];
@@ -137,6 +141,22 @@ export class ResttyPaneHandle implements ResttyPaneApi {
 
   clearScreen(): void {
     this.resolvePane().clearScreen();
+  }
+
+  setColorScheme(scheme: "light" | "dark"): void {
+    this.resolvePane().setColorScheme(scheme);
+  }
+
+  getMode(mode: number, ansi?: boolean): boolean | undefined {
+    return this.resolvePane().getMode(mode, ansi);
+  }
+
+  snapshot(): Uint8Array | undefined {
+    return this.resolvePane().snapshot();
+  }
+
+  restore(bytes: Uint8Array): boolean {
+    return this.resolvePane().restore(bytes);
   }
 
   connectPty(url = ""): void {

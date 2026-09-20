@@ -36,6 +36,7 @@ type RuntimeControllerPublicApiDeps = {
   destroy: () => void;
   applyTheme: ResttyRuntimeTerminalApi["applyTheme"];
   clearScreen: () => void;
+  state: Pick<ResttyRuntimeTerminalApi, "setColorScheme" | "getMode" | "snapshot" | "restore">;
   sendInput: RuntimeSendInput;
   copySelectionToClipboard: ResttyRuntimeInteractionApi["copySelectionToClipboard"];
   pasteFromClipboard: ResttyRuntimeInteractionApi["pasteFromClipboard"];
@@ -59,6 +60,7 @@ export function createRuntimePublicApi(deps: RuntimeControllerPublicApiDeps): Re
       internalState: deps.internalState,
       applyTheme: deps.applyTheme,
       clearScreen: deps.clearScreen,
+      state: deps.state,
       terminalCapabilities: deps.publicApiCapabilities.terminal,
     }),
     io: createRuntimeIoView({

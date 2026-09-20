@@ -104,6 +104,10 @@ export type ResttyWasmExports = WebAssembly.Exports & {
   restty_set_default_colors?: (handle: number, fg: number, bg: number, cursor: number) => number;
   restty_set_palette?: (handle: number, ptr: number, len: number) => number;
   restty_reset_palette?: (handle: number) => number;
+  restty_set_color_scheme?: (handle: number, scheme: number) => number;
+  restty_get_mode?: (handle: number, mode: number, ansi: number) => number;
+  restty_snapshot_encode?: (handle: number, outLenPtr: number) => number;
+  restty_snapshot_decode?: (handle: number, ptr: number, len: number) => number;
   restty_kitty_tick: (handle: number, now: number) => number;
   restty_selection_text: (
     handle: number,

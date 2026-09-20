@@ -49,6 +49,25 @@ export type ResttyRuntimeTerminalApi = {
   resetTheme: () => void;
   /** Clear terminal scrollback and visible content. */
   clearScreen: () => void;
+  /**
+   * Tell the terminal which color scheme the host UI is showing. Answers
+   * `CSI ? 996 n` queries and, when the running program enabled DEC mode
+   * 2031, immediately sends it a `CSI ? 997 ; n` report so it can re-theme.
+   */
+  setColorScheme: (scheme: "light" | "dark") => void;
+  /** Read a DEC private mode (default) or ANSI mode. Unknown modes return `undefined`. */
+  getMode: (mode: number, ansi?: boolean) => boolean | undefined;
+  /**
+   * Encode the complete terminal state (both screens, scrollback, modes,
+   * palette, unfinished escape sequences) into a portable byte buffer.
+   */
+  snapshot: () => Uint8Array | undefined;
+  /**
+   * Replace the terminal state with a buffer from `snapshot()`. The snapshot's
+   * own size wins; call `updateSize(true)` or `resize` afterwards to fit the
+   * host. Returns false and leaves the terminal untouched on failure.
+   */
+  restore: (snapshot: Uint8Array) => boolean;
 };
 
 export type ResttyRuntimeIoApi = {

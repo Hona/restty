@@ -196,6 +196,10 @@ export type ResttyPaneWithRuntimeActions = ResttyPaneWithRuntime & {
   copySelectionToClipboard: () => Promise<boolean>;
   pasteFromClipboard: () => Promise<boolean>;
   clearScreen: () => void;
+  setColorScheme: ResttyRuntimeTerminalApi["setColorScheme"];
+  getMode: ResttyRuntimeTerminalApi["getMode"];
+  snapshot: ResttyRuntimeTerminalApi["snapshot"];
+  restore: ResttyRuntimeTerminalApi["restore"];
   connectPty: (url?: string) => void;
   disconnectPty: () => void;
   isPtyConnected: () => boolean;
