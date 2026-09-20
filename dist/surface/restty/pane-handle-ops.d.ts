@@ -1,0 +1,24 @@
+import type { ResttyManagedPane, ResttyManagedPaneSearchUiStyleOptions } from "../panes/managed-pane-types";
+import { ResttyPaneHandle } from "./pane-handle";
+import type { ResttyPaneSearchUiCloseOptions, ResttyPaneSearchUiOpenOptions } from "../search-ui";
+type ResttyPaneLookup = {
+    getPanes: () => ResttyManagedPane[];
+    getPaneById: (id: number) => ResttyManagedPane | null;
+    getActivePane: () => ResttyManagedPane | null;
+    getFocusedPane: () => ResttyManagedPane | null;
+    openPaneSearch: (id: number, options?: ResttyPaneSearchUiOpenOptions) => void;
+    closePaneSearch: (id: number, options?: ResttyPaneSearchUiCloseOptions) => void;
+    togglePaneSearch: (id: number, options?: ResttyPaneSearchUiOpenOptions & ResttyPaneSearchUiCloseOptions) => void;
+    isPaneSearchOpen: (id: number) => boolean;
+    getSearchUiStyleOptions: () => Readonly<Required<ResttyManagedPaneSearchUiStyleOptions>>;
+    setSearchUiStyleOptions: (options: ResttyManagedPaneSearchUiStyleOptions) => void;
+};
+export declare function requirePaneById(getPaneById: (id: number) => ResttyManagedPane | null, id: number): ResttyManagedPane;
+export declare function makePaneHandle(lookup: Pick<ResttyPaneLookup, "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">, id: number): ResttyPaneHandle;
+export declare function requireActivePaneHandle(lookup: Pick<ResttyPaneLookup, "getActivePane" | "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">): ResttyPaneHandle;
+export declare function panes(lookup: Pick<ResttyPaneLookup, "getPanes" | "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">): ResttyPaneHandle[];
+export declare function pane(lookup: Pick<ResttyPaneLookup, "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">, id: number): ResttyPaneHandle | null;
+export declare function activePane(lookup: Pick<ResttyPaneLookup, "getActivePane" | "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">): ResttyPaneHandle | null;
+export declare function focusedPane(lookup: Pick<ResttyPaneLookup, "getFocusedPane" | "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">): ResttyPaneHandle | null;
+export declare function forEachPane(lookup: Pick<ResttyPaneLookup, "getPanes" | "getPaneById" | "openPaneSearch" | "closePaneSearch" | "togglePaneSearch" | "isPaneSearchOpen" | "getSearchUiStyleOptions" | "setSearchUiStyleOptions">, visitor: (pane: ResttyPaneHandle) => void): void;
+export {};

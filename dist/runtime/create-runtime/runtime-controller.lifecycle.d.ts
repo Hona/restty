@@ -1,0 +1,50 @@
+import { type WebGPUState, type WebGLState } from "../../renderer";
+import type { PtyTransport } from "../../pty";
+import type { ResttyRuntimeTerminalApi } from "../core/api";
+import type { ResttyRuntimeLifecycleState } from "../core/lifecycle";
+import type { ResttyRuntimeEventHub } from "../core/runtime-events";
+import type { ResttyRuntimeSession } from "../core/resources";
+import type { LifecycleThemeRuntime } from "./runtime-controller.api.types";
+import type { RuntimeControllerInternalState, RuntimeControllerSharedState } from "./runtime-controller.state.types";
+type RuntimeControllerLifecycleOptions = {
+    runtimeEvents: ResttyRuntimeEventHub;
+    session: ResttyRuntimeSession;
+    ptyTransport: Pick<PtyTransport, "destroy">;
+    ptyInputRuntime: {
+        cancelSyncOutputReset: () => void;
+        disconnectPty: () => void;
+    };
+    lifecycleThemeSizeRuntime: LifecycleThemeRuntime;
+    cleanupFns: Array<() => void>;
+    cleanupCanvasFns: Array<() => void>;
+    readState: () => RuntimeControllerSharedState;
+    writeState: (patch: Partial<RuntimeControllerSharedState>) => void;
+    gridState: {
+        cols: number;
+        rows: number;
+    };
+    getCanvas: () => HTMLCanvasElement;
+    applyTheme: ResttyRuntimeTerminalApi["applyTheme"];
+    ensureFont: () => Promise<void>;
+    updateSize: () => void;
+    updateGrid: () => void;
+    replaceCanvas: () => void;
+    rebuildWebGPUShaderStages: (state: WebGPUState) => void;
+    rebuildWebGLShaderStages: (state: WebGLState) => void;
+    setShaderStagesDirty: (dirty: boolean) => void;
+    clearWebGPUShaderStages: () => void;
+    destroyWebGPUStageTargets: () => void;
+    clearWebGLShaderStages: (state?: WebGLState) => void;
+    destroyWebGLStageTargets: (state?: WebGLState) => void;
+    handleSearchWasmReset: () => void;
+    internalState: RuntimeControllerInternalState;
+    maxScrollbackBytes: number;
+    loop: (state: WebGPUState | WebGLState) => void;
+};
+type RuntimeControllerLifecycle = {
+    getLifecycleState: () => ResttyRuntimeLifecycleState;
+    init: () => Promise<void>;
+    destroy: () => void;
+};
+export declare function createRuntimeControllerLifecycle(options: RuntimeControllerLifecycleOptions): RuntimeControllerLifecycle;
+export {};

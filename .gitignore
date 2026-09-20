@@ -3,7 +3,7 @@ node_modules/
 
 # Build outputs and temp
 .tmp/
-dist/
+# dist/ is committed on this branch so opencode can consume it as a git dependency
 playground/dist/
 playground/build/
 playground/.react-router/
