@@ -39,6 +39,13 @@ export type ResttyRuntimeServicesConfig = {
    * queued for rendering.
    */
   beforeRenderOutput?: (payload: ResttyRuntimeInputPayload) => string | null | void;
+  /**
+   * Called when the user clicks a detected hyperlink or OSC 8 link. The
+   * pointer event is passed so hosts can require a modifier or route
+   * `file:` URIs elsewhere. Defaults to opening http(s)/mailto links in a
+   * new tab.
+   */
+  openLink?: (uri: string, event: MouseEvent) => void;
 };
 
 /**

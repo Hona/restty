@@ -841,3 +841,80 @@ test("bindPointerEvents uses triple-click to trigger line selection", () => {
   expect(third.prevented()).toBe(true);
   expect(lineCells).toEqual([{ row: 1, col: 5 }]);
 });
+
+test("bindPointerEvents passes the pointer event to openLink so hosts can gate on modifiers", () => {
+  const canvas = new FakeCanvas();
+  const opened: Array<{ uri: string; ctrlKey: boolean }> = [];
+  const desktopSelectionState = {
+    pendingPointerId: null as number | null,
+    pendingCell: null as { row: number; col: number } | null,
+    startedWithActiveSelection: false,
+    lastPrimaryClickAt: 0,
+    lastPrimaryClickCell: null as { row: number; col: number } | null,
+    lastPrimaryClickCount: 0,
+  };
+
+  bindPointerEvents({
+    canvas: canvas as unknown as HTMLCanvasElement,
+    bindOptions: {
+      inputHandler: createInputHandlerStub({
+        sendMouseEvent: () => false,
+        mouseActive: false,
+        altScreen: false,
+      }),
+      sendKeyInput: () => {},
+      sendPasteText: () => {},
+      sendPastePayloadFromDataTransfer: () => false,
+      getLastKeydownSeq: () => "",
+      getLastKeydownSeqAt: () => 0,
+      keydownBeforeinputDedupeMs: 80,
+      openLink: (uri, event) => {
+        opened.push({ uri, ctrlKey: event.ctrlKey });
+      },
+    },
+    touchSelectionMode: "off",
+    touchSelectionLongPressMs: 450,
+    touchSelectionMoveThresholdPx: 10,
+    selectionState: { active: false, dragging: false, anchor: null, focus: null },
+    touchSelectionState: {
+      pendingPointerId: null,
+      activePointerId: null,
+      panPointerId: null,
+      pendingCell: null,
+      pendingStartedAt: 0,
+      pendingStartX: 0,
+      pendingStartY: 0,
+      panLastY: 0,
+      pendingTimer: 0,
+    },
+    desktopSelectionState,
+    linkState: { hoverId: 3, hoverUri: "https://example.com/" },
+    cleanupCanvasFns: [],
+    isTouchPointer: (event) => event.pointerType === "touch",
+    clearPendingTouchSelection: () => {},
+    clearPendingDesktopSelection: () => {
+      desktopSelectionState.pendingPointerId = null;
+      desktopSelectionState.pendingCell = null;
+      desktopSelectionState.startedWithActiveSelection = false;
+    },
+    tryActivatePendingTouchSelection: () => false,
+    beginSelectionDrag: () => {},
+    normalizeSelectionCell: (cell) => cell,
+    positionToCell: () => ({ row: 0, col: 0 }),
+    scrollViewportByLines: () => {},
+    clearSelection: () => {},
+    updateCanvasCursor: () => {},
+    markNeedsRender: () => {},
+    updateLinkHover: () => {},
+    getGridState: () => ({ cols: 80, rows: 24, cellW: 10, cellH: 20 }),
+    getWasmReady: () => true,
+    getWasmHandle: () => 1,
+  });
+
+  const down = createPointerEvent({ ctrlKey: true, pointerId: 9 });
+  canvas.emit("pointerdown", down.event as unknown as Event);
+  const up = createPointerEvent({ ctrlKey: true, pointerId: 9 });
+  canvas.emit("pointerup", up.event as unknown as Event);
+
+  expect(opened).toEqual([{ uri: "https://example.com/", ctrlKey: true }]);
+});

@@ -65,7 +65,10 @@ import type {
   ResttyFontResourceLease,
 } from "./core/resources";
 import { getDefaultResttyRuntimeSession } from "./core/session";
-import { fitTextTailToWidth, openLink } from "./create-runtime/runtime-io-utils";
+import {
+  fitTextTailToWidth,
+  openLink as openLinkInNewTab,
+} from "./create-runtime/runtime-io-utils";
 import {
   drawUnderlineStyle,
   drawStrikethrough,
@@ -578,7 +581,7 @@ export function createResttyRuntime(options: ResttyRuntimeConfig): ResttyRuntime
       getLastKeydownSeq: () => lastKeydownSeq,
       getLastKeydownSeqAt: () => lastKeydownSeqAt,
       keydownBeforeinputDedupeMs: KEYDOWN_BEFOREINPUT_DEDUPE_MS,
-      openLink,
+      openLink: services.openLink ?? openLinkInNewTab,
     });
   }
 

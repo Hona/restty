@@ -17,7 +17,7 @@ export type BindCanvasEventsOptions = {
   getLastKeydownSeq: () => string;
   getLastKeydownSeqAt: () => number;
   keydownBeforeinputDedupeMs: number;
-  openLink: (url: string) => void;
+  openLink: (url: string, event: MouseEvent) => void;
 };
 
 export type CreateRuntimeInteractionOptions = {

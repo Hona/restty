@@ -10,7 +10,7 @@ import type {
 type CreatePointerUpHandlerOptions = {
   inputHandler: InputHandler;
   sendKeyInput: (text: string) => void;
-  openLink: (url: string) => void;
+  openLink: (url: string, event: MouseEvent) => void;
   isTouchPointer: (event: PointerEvent) => boolean;
   touchSelectionState: RuntimeTouchSelectionState;
   selectionState: RuntimeSelectionState;
@@ -177,7 +177,7 @@ export function createPointerUpHandler(options: CreatePointerUpHandlerOptions) {
       }
     }
     if (!selectionState.active && event.button === 0 && linkState.hoverUri) {
-      openLink(linkState.hoverUri);
+      openLink(linkState.hoverUri, event);
     }
   };
 }
