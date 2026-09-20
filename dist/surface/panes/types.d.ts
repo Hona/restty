@@ -1,4 +1,4 @@
-import type { ResttyRuntime, ResttyRuntimeInteractionApi, ResttyRuntimeIoApi, ResttyRuntimeRenderApi, ResttyRuntimeSearchApi, ResttyRuntimeTerminalApi } from "../runtime/core/api";
+import type { ResttyRuntime, ResttyRuntimeInteractionApi, ResttyRuntimeIoApi, ResttyRuntimeRenderApi, ResttyRuntimeSearchApi, ResttyRuntimeTerminalApi } from "../../runtime/core/api";
 /**
  * Direction for splitting a pane.
  * - vertical: split left/right

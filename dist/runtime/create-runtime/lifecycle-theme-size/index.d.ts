@@ -12,5 +12,5 @@ export declare function createRuntimeLifecycleThemeSize(deps: LifecycleThemeSize
     bindFocusEvents: () => void;
     bindAutoResizeEvents: () => void;
     cancelScheduledSizeUpdate: () => void;
-    getActiveTheme: () => GhosttyTheme | null;
+    getActiveTheme: () => import("../../..").GhosttyTheme | null;
 };
